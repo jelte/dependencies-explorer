@@ -1,0 +1,38 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Packages/be.khepri.bundle-explorer/Editor/UI/DependenciesExplorerWindow.uss?fileID=7433441132597879392&amp;guid=92c80f17a5d0fd647840a563296f3d78&amp;type=3#DependenciesExplorerWindow" />
+    <uie:Toolbar>
+        <uie:ToolbarButton text="Open" display-tooltip-when-elided="true" name="open" />
+    </uie:Toolbar>
+    <DependenciesExplorer.Editor.UI.Elements.SplitView fixed-pane-initial-dimension="250" name="bundleListSplit" style="flex-grow: 1; height: 100%; min-height: 100%; max-height: 100%;">
+        <ui:VisualElement name="left-panel" style="flex-grow: 1; height: 100%; min-height: 100%; max-height: 100%;">
+            <uie:Toolbar>
+                <uie:ToolbarSearchField focusable="true" name="search" style="flex-grow: 1; flex-shrink: 1; flex-direction: row; width: 100%;" />
+            </uie:Toolbar>
+            <DependenciesExplorer.Editor.UI.Elements.BundleListView focusable="true" show-border="true" virtualization-method="DynamicHeight" show-alternating-row-backgrounds="ContentOnly" fixed-item-height="16" style="min-height: 100%; max-height: 100%; flex-grow: 1;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="right-panel" style="height: 100%;">
+            <DependenciesExplorer.Editor.UI.Elements.SplitView fixed-pane-index="1" fixed-pane-initial-dimension="350" name="inspectorSplit">
+                <ui:VisualElement name="middle-panel">
+                    <uie:Toolbar>
+                        <uie:ToolbarToggle focusable="false" label="Bidirection Dependencies" name="bidirectionalDependencies" />
+                    </uie:Toolbar>
+                    <DependenciesExplorer.Editor.UI.Elements.BundleGraphView focusable="true" style="flex-grow: 1;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="right-panel">
+                    <DependenciesExplorer.Editor.UI.Elements.InspectorView>
+                        <ui:Label text="BundleName" display-tooltip-when-elided="true" name="name" style="visibility: visible; -unity-font-style: bold; background-color: rgb(32, 32, 32); padding-left: 5px; padding-top: 5px; padding-right: 5px; padding-bottom: 5px; font-size: 12px;" />
+                        <ui:GroupBox style="flex-grow: 0.5; height: auto; min-height: 370px; max-height: 1000px; margin-top: 0;">
+                            <ui:Label text="Dependencies" display-tooltip-when-elided="true" style="margin-top: 5px; -unity-font-style: bold; margin-bottom: 5px;" />
+                            <ui:Label text="Bundles" display-tooltip-when-elided="true" style="background-color: rgb(32, 32, 32); padding-bottom: 2px; padding-top: 2px; padding-left: 2px;" />
+                            <ui:ListView focusable="true" show-foldout-header="false" header-title="Bundles" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="depBundles" fixed-item-height="16" style="flex-grow: 1; height: 120px; max-height: 120px; min-height: 120px;" />
+                            <ui:Label text="Files" display-tooltip-when-elided="true" style="background-color: rgb(32, 32, 32); padding-left: 2px; padding-top: 2px; padding-bottom: 2px;" />
+                            <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="depFiles" fixed-item-height="16" style="flex-grow: 1; max-height: 120px; min-height: 120px; height: 120px;" />
+                            <ui:Label text="Linked from" display-tooltip-when-elided="true" enable-rich-text="true" style="background-color: rgb(32, 32, 32); padding-top: 2px; padding-bottom: 2px; padding-left: 2px;" />
+                            <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="files" fixed-item-height="16" style="flex-grow: 1; max-height: 100%; height: auto; min-height: 120px;" />
+                        </ui:GroupBox>
+                    </DependenciesExplorer.Editor.UI.Elements.InspectorView>
+                </ui:VisualElement>
+            </DependenciesExplorer.Editor.UI.Elements.SplitView>
+        </ui:VisualElement>
+    </DependenciesExplorer.Editor.UI.Elements.SplitView>
+</ui:UXML>
