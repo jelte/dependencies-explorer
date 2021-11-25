@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using DependenciesExplorer.Editor.Data;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DependenciesExplorer.Editor.UI.Elements
@@ -11,6 +13,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
         private ListView _lstDependenciesBundles;
         private ListView _lstDependenciesFiles;
         private ListView _lstFiles;
+        private ListView _lstLinksTo;
+
+        private List<int> _empty = new List< int >();
 
         public new class UxmlFactory : UxmlFactory< InspectorView, UxmlTraits > { }
 
@@ -35,24 +40,33 @@ namespace DependenciesExplorer.Editor.UI.Elements
             {
                 if (!(selected is KeyValuePair<Bundle, Dictionary<string,List<string>>> pair)) continue;
 
-                _lstFiles.Clear();
                 _lstDependenciesFiles.itemsSource = pair.Value.Select( pair => pair ).ToArray();
-                _lstFiles.itemsSource = null;
-                _lstDependenciesFiles.Rebuild();
-                _lstFiles.Rebuild();
+                _lstFiles.itemsSource = _empty;
+                _lstLinksTo.itemsSource = _empty;
+                _lstDependenciesFiles.Refresh();
                 return;
             }
         }
 
         private void OnDependencyFileSelectionChange(IEnumerable<object> selection)
         {
+	        Selection.objects = selection.Select( value => AssetDatabase.LoadAssetAtPath< Object >( (( KeyValuePair<string, List<string>> )value).Key ) ).ToArray();
             foreach (var selected in selection)
             {
                 if (!(selected is KeyValuePair<string, List<string>> pair)) continue;
 
+                _lstLinksTo.itemsSource = _empty;
                 _lstFiles.Clear();
                 _lstFiles.itemsSource = pair.Value;
-                _lstFiles.Rebuild();
+                _lstFiles.Refresh();
+
+
+                var guid = AssetDatabase.AssetPathToGUID( pair.Key );
+                Indexer.TryFind( guid, out var deps );
+
+                _lstLinksTo.Clear();
+                _lstLinksTo.itemsSource = deps;
+                _lstLinksTo.Refresh();
                 return;
             }
         }
@@ -82,17 +96,41 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstFiles = this.Q<ListView>("files");
                 _lstFiles.makeItem = () => new FileElement();
                 _lstFiles.bindItem = BindFileItem;
+                _lstFiles.onSelectionChange += OnFileSelectionChange;
+
+                _lstLinksTo = this.Q< ListView >( "linksTo" );
+                _lstLinksTo.makeItem = () => new FileElement();
+                _lstLinksTo.bindItem = BindLinkToItem;
             }
 
             _lstDependenciesBundles.Clear();
-            _lstDependenciesFiles.Clear();
-            _lstFiles.Clear();
             _lstDependenciesBundles.itemsSource = bundle.Out.OrderBy( pair => pair.Key.Name ).ToArray();
-            _lstDependenciesFiles.itemsSource = null;
-            _lstFiles.itemsSource = null;
-            _lstDependenciesBundles.Rebuild();
-            _lstDependenciesFiles.Rebuild();
-            _lstFiles.Rebuild();
+            _lstDependenciesFiles.itemsSource = _empty;
+            _lstFiles.itemsSource = _empty;
+            _lstLinksTo.itemsSource = _empty;
+            _lstDependenciesBundles.Refresh();
+        }
+
+        private void BindLinkToItem( VisualElement element, int index )
+        {
+	        (element as FileElement)?.BindData( AssetDatabase.GUIDToAssetPath( _lstLinksTo.itemsSource[ index ] as string ) );
+        }
+
+        private void OnFileSelectionChange( IEnumerable< object > selection )
+        {
+			Selection.objects = selection.Select( value => AssetDatabase.LoadAssetAtPath< Object >( ( string )value ) ).ToArray();
+	        foreach (var selected in selection)
+	        {
+		        if (!(selected is string path)) continue;
+
+		        var guid = AssetDatabase.AssetPathToGUID( path );
+		        Indexer.TryFind( guid, out var deps );
+
+		        _lstLinksTo.Clear();
+		        _lstLinksTo.itemsSource = deps;
+		        _lstLinksTo.Refresh();
+		        return;
+	        }
         }
 
         private class BundleElement : VisualElement

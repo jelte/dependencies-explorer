@@ -56,7 +56,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
             In = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
             In.portName = string.Empty;
-            In.portColor = Color.green;
+            In.portColor = new Color(Color.green.r, Color.green.g, Color.green.b, 0.2f);
             In.SetEnabled(false);
             Out = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
             Out.portName = string.Empty;

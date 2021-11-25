@@ -3,5 +3,8 @@
   "version": "0.0.1",
   "unity": "2019.3",
   "displayName": "Addresssables Bundle Explorer",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "com.unity.ui.builder": "1.0.0-preview.18"
+  }
 }

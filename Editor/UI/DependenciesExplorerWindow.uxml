@@ -21,15 +21,17 @@
                 <ui:VisualElement name="right-panel">
                     <DependenciesExplorer.Editor.UI.Elements.InspectorView>
                         <ui:Label text="BundleName" display-tooltip-when-elided="true" name="name" style="visibility: visible; -unity-font-style: bold; background-color: rgb(32, 32, 32); padding-left: 5px; padding-top: 5px; padding-right: 5px; padding-bottom: 5px; font-size: 12px;" />
-                        <ui:GroupBox style="flex-grow: 0.5; height: auto; min-height: 370px; max-height: 1000px; margin-top: 0;">
-                            <ui:Label text="Dependencies" display-tooltip-when-elided="true" style="margin-top: 5px; -unity-font-style: bold; margin-bottom: 5px;" />
-                            <ui:Label text="Bundles" display-tooltip-when-elided="true" style="background-color: rgb(32, 32, 32); padding-bottom: 2px; padding-top: 2px; padding-left: 2px;" />
-                            <ui:ListView focusable="true" show-foldout-header="false" header-title="Bundles" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="depBundles" fixed-item-height="16" style="flex-grow: 1; height: 120px; max-height: 120px; min-height: 120px;" />
-                            <ui:Label text="Files" display-tooltip-when-elided="true" style="background-color: rgb(32, 32, 32); padding-left: 2px; padding-top: 2px; padding-bottom: 2px;" />
-                            <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="depFiles" fixed-item-height="16" style="flex-grow: 1; max-height: 120px; min-height: 120px; height: 120px;" />
-                            <ui:Label text="Linked from" display-tooltip-when-elided="true" enable-rich-text="true" style="background-color: rgb(32, 32, 32); padding-top: 2px; padding-bottom: 2px; padding-left: 2px;" />
-                            <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="files" fixed-item-height="16" style="flex-grow: 1; max-height: 100%; height: auto; min-height: 120px;" />
-                        </ui:GroupBox>
+                   
+                        <ui:Label text="Dependencies" display-tooltip-when-elided="true" style="margin-top: 5px; -unity-font-style: bold; margin-bottom: 5px;" />
+                        <ui:Label text="Bundles" display-tooltip-when-elided="true" style="background-color: rgb(32, 32, 32); padding-bottom: 2px; padding-top: 2px; padding-left: 2px;" />
+                        <ui:ListView focusable="true" show-foldout-header="false" header-title="Bundles" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="depBundles" fixed-item-height="16" style="flex-grow: 1; height: 120px; max-height: 120px; min-height: 120px;" />
+                        <ui:Label text="Files" display-tooltip-when-elided="true" style="background-color: rgb(32, 32, 32); padding-left: 2px; padding-top: 2px; padding-bottom: 2px;" />
+                        <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="depFiles" fixed-item-height="16" style="flex-grow: 1; max-height: 120px; min-height: 120px; height: 120px;" />
+                        <ui:Label text="Linked from" display-tooltip-when-elided="true" enable-rich-text="true" style="background-color: rgb(32, 32, 32); padding-top: 2px; padding-bottom: 2px; padding-left: 2px;" />
+                        <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="files" fixed-item-height="16" style="flex-grow: 1; max-height: 100%; height: auto; min-height: 120px;" />
+                        <ui:Label text="Links To" display-tooltip-when-elided="true" enable-rich-text="true" style="background-color: rgb(32, 32, 32); padding-top: 2px; padding-bottom: 2px; padding-left: 2px;" />
+                        <ui:ListView focusable="true" show-foldout-header="false" header-title="Files" show-border="true" show-alternating-row-backgrounds="ContentOnly" name="linksTo" fixed-item-height="16" style="flex-grow: 1; max-height: 100%; height: auto; min-height: 120px;" />
+
                     </DependenciesExplorer.Editor.UI.Elements.InspectorView>
                 </ui:VisualElement>
             </DependenciesExplorer.Editor.UI.Elements.SplitView>

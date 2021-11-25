@@ -17,6 +17,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         private Bundle _selectedBundle;
 
         private MiniMap _miniMap;
+        private Reader _reader;
 
         public bool bidirectionalDependecies { get; set; }
 
@@ -45,16 +46,16 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
         public void OnSelectionChange(IEnumerable<object> selection)
         {
-            DeleteElements(graphElements);
+            DeleteElements(graphElements.ToList());
             _nodes.Clear();
 
             _current = selection;
-            foreach (var item in _current)
+            if ( _current.Count() == 1 )
             {
-                if (!(item is Bundle bundle))
-                    continue;
-
-                AddDependencies(AddBundle(bundle, new Vector2(30, contentRect.center.y)));
+	            var item = _current.First();
+	            if ( !( item is Bundle bundle ) ) return;
+	            AddDependencies( AddBundle( bundle, new Vector2( 30, contentRect.center.y ) ) );
+	            return;
             }
         }
 
@@ -163,5 +164,44 @@ namespace DependenciesExplorer.Editor.UI.Elements
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
         }
+
+        public void Reset( Reader reader )
+        {
+	        DeleteElements(graphElements.ToList());
+	        _nodes.Clear();
+
+	        _reader = reader;
+	        var i = 0;
+	        var radius = 1250f;
+	        var count = _reader.Bundles.Count;
+	        foreach ( var bundle in _reader.Bundles.Values )
+	        {
+		        var angle = ( (float) i / count ) * 360f;
+		        var position = ( Vector2.one * radius ).Rotate( angle );
+		        AddBundle( bundle, contentRect.center  + position );
+		        i++;
+	        }
+
+	        foreach ( var node in _nodes.Values )
+	        {
+		        AddDependencies( node );
+	        }
+        }
+
     }
+
+    public static class Vector2Extension {
+
+	    public static Vector2 Rotate(this Vector2 v, float degrees) {
+		    float sin = Mathf.Sin(degrees * Mathf.Deg2Rad);
+		    float cos = Mathf.Cos(degrees * Mathf.Deg2Rad);
+
+		    float tx = v.x;
+		    float ty = v.y;
+		    v.x = (cos * tx) - (sin * ty);
+		    v.y = (sin * tx) + (cos * ty);
+		    return v;
+	    }
+    }
+
 }

@@ -61,8 +61,6 @@ namespace DependenciesExplorer.Editor
 
             _btnOpen.clicked += OnBtnOpenClicked;
 
-            _bundleListView.headerTitle = "Bundles";
-
             BundleNodeView.AssignedColors.Clear();
             _search.RegisterValueChangedCallback(OnSearchTextChanged);
 
@@ -73,7 +71,10 @@ namespace DependenciesExplorer.Editor
         private void OnBidirectionalChanged(ChangeEvent<bool> evt)
         {
             _graphView.bidirectionalDependecies = evt.newValue;
-            _graphView.OnSelectionChange(_bundleListView.selectedItems);
+            if ( _bundleListView.selectedItems.Count() > 0 )
+				_graphView.OnSelectionChange(_bundleListView.selectedItems);
+            else
+				_graphView.Reset(_reader);
         }
 
         private void OnBtnOpenClicked()
@@ -82,8 +83,10 @@ namespace DependenciesExplorer.Editor
 
             _reader ??= new Reader();
             _reader.ReadFile( path );
+
             _bundleListView.itemsSource = _reader.Bundles.Values.OrderBy( bundle => bundle.Name ).ToArray();
-            _bundleListView.Rebuild();
+            _bundleListView.Refresh();
+            _graphView.Reset( _reader );
         }
 
         private void OnSearchTextChanged(ChangeEvent<string> evt)
@@ -94,7 +97,7 @@ namespace DependenciesExplorer.Editor
             _splitList.UnCollapse();
             _bundleListView.ClearSelection();
             _bundleListView.itemsSource = _reader.Bundles.Values.Where( v => v.Name.Contains(value) ).ToArray();
-            _bundleListView.Rebuild();
+            _bundleListView.Refresh();
         }
     }
 
