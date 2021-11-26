@@ -85,7 +85,7 @@ namespace DependenciesExplorer.Editor
             _reader.ReadFile( path );
 
             _bundleListView.itemsSource = _reader.Bundles.Values.OrderBy( bundle => bundle.Name ).ToArray();
-            _bundleListView.Rebuild();
+            _bundleListView.Refresh();
             _graphView.Reset( _reader );
         }
 
@@ -97,7 +97,7 @@ namespace DependenciesExplorer.Editor
             _splitList.UnCollapse();
             _bundleListView.ClearSelection();
             _bundleListView.itemsSource = _reader.Bundles.Values.Where( v => v.Name.Contains(value) ).ToArray();
-            _bundleListView.Rebuild();
+            _bundleListView.Refresh();
         }
     }
 

@@ -165,6 +165,7 @@
 				var match = Regex.Match(line, "^\\t\\tExpanded Bundle Dependencies: (.*)", RegexOptions.IgnoreCase);
 				if (!match.Success) return false;
 				dependencies = match.Groups[1].Value.Split(',')
+					.Where(value => !string.IsNullOrEmpty(value))
 					.Select(value => value.Trim().Replace(".bundle", "").ToLower())
 					.ToArray();
 				return true;

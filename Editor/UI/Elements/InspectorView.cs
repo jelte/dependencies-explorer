@@ -43,7 +43,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstDependenciesFiles.itemsSource = pair.Value.Select( pair => pair ).ToArray();
                 _lstFiles.itemsSource = _empty;
                 _lstLinksTo.itemsSource = _empty;
-                _lstDependenciesFiles.Rebuild();
+                _lstDependenciesFiles.Refresh();
                 return;
             }
         }
@@ -58,7 +58,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstLinksTo.itemsSource = _empty;
                 _lstFiles.Clear();
                 _lstFiles.itemsSource = pair.Value;
-                _lstFiles.Rebuild();
+                _lstFiles.Refresh();
 
 
                 var guid = AssetDatabase.AssetPathToGUID( pair.Key );
@@ -66,7 +66,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
                 _lstLinksTo.Clear();
                 _lstLinksTo.itemsSource = deps;
-                _lstLinksTo.Rebuild();
+                _lstLinksTo.Refresh();
                 return;
             }
         }
@@ -108,7 +108,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
             _lstDependenciesFiles.itemsSource = _empty;
             _lstFiles.itemsSource = _empty;
             _lstLinksTo.itemsSource = _empty;
-            _lstDependenciesBundles.Rebuild();
+            _lstDependenciesBundles.Refresh();
         }
 
         private void BindLinkToItem( VisualElement element, int index )
@@ -128,7 +128,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
 		        _lstLinksTo.Clear();
 		        _lstLinksTo.itemsSource = deps;
-		        _lstLinksTo.Rebuild();
+		        _lstLinksTo.Refresh();
 		        return;
 	        }
         }

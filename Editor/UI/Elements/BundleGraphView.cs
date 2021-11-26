@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using DependenciesExplorer.Editor.Data;
 using Unity.EditorCoroutines.Editor;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DependenciesExplorer.Editor.UI.Elements
 {
@@ -23,6 +23,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
         private Reader _reader;
 
         public bool bidirectionalDependecies { get; set; }
+
+        private List<string> _path = new List<string>();
+        private string _currentPath;
 
         public new class UxmlFactory : UxmlFactory<BundleGraphView, UxmlTraits>
         {
@@ -56,19 +59,19 @@ namespace DependenciesExplorer.Editor.UI.Elements
 	        if ( !( item is Bundle bundle ) ) return;
             var bundleNode = AddBundle( bundle, Vector2.zero );
 	        AddDependencies( bundleNode );
+            bundleNode.Position = new Vector2(30, contentRect.center.y);
             MarkDirtyRepaint();
             EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(bundleNode));
         }
 
-        private IEnumerator RePosition(BundleNodeView node)
+        private IEnumerator RePosition(IBundleNode node)
         {
             yield return null;
-            Reposition(node, new Vector2(30, contentRect.center.y), node.layout.width);
+            Reposition(node, node.Position, node.layout.width);
         }
 
-        private void Reposition(BundleNodeView node, Vector2 position, float width)
+        private void Reposition(IBundleNode node, Vector2 position, float width)
         {
-            if (node.Position.magnitude > float.Epsilon) return;
             node.Position = position;
             var height = node.layout.height + 10;
             var outCount = node.Out.connections.Count();
@@ -80,38 +83,75 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
             var i = 0;
             foreach (var connection in node.Out.connections)
-                Reposition(connection.input.node as BundleNodeView , start + Vector2.up * (i++ * height), maxWidth);
+            {
+                var onode = connection.input.node as IBundleNode;
+                onode.Position = start + Vector2.up * (i++ * height);
+                Reposition(onode, onode.Position, maxWidth);
+            }
         }
 
-        private void AddDependencies(BundleNodeView node, bool allNodes = false)
+        private void AddDependencies(IBundleNode node )
         {
             var bundle = node.Bundle;
 
-            var children = new List<BundleNodeView>();
-            foreach (var a in bundle.Out.Where( b => !_nodes.ContainsKey(b.Key.Name) ))
+            foreach (var a in bundle.Out )
             {
                 var child = AddBundle(a.Key);
-                if ( !bidirectionalDependecies ) AddElement(node.Out.ConnectTo(child.In));
-                children.Add(child);
+                AddElement(node.Out.ConnectTo(child.In));
+                AddDependeciesSummary(child);
             }
+        }
 
-            foreach (var a in bundle.Out)
+        private void AddDependeciesSummary(BundleNodeView bundleNode)
+        {
+            if (bundleNode.Bundle.ExpandedDependencies.Length == 0) return;
+            
+            var summaryNode = new BundleNodeSummary(bundleNode.Bundle, OnSummarySelected);
+            AddElement(summaryNode);
+            AddElement(bundleNode.Out.ConnectTo(summaryNode.In));
+        }
+
+        private void RemoveNode(GraphElement element, bool inclElement = true )
+        {
+            if (element is IBundleNode node)
             {
-                if ( !_nodes.TryGetValue(a.Key.Name, out var outNode) ) continue;
-                if ( bidirectionalDependecies ) AddElement(node.Out.ConnectTo(outNode.In));
+                var connections = node.Out.connections.ToArray();
+                foreach (var connection in connections)
+                {
+                    RemoveNode(connection.input.node);
+                    RemoveElement(connection);
+                }
+                node.Out.DisconnectAll();
             }
 
-            foreach (var child in children)
-                AddDependencies(child);
-            node.RefreshPorts();
+            if (!inclElement) return;
+            RemoveElement(element);
+        }
+        
+        private void OnSummarySelected(BundleNodeSummary summaryNode)
+        {
+            if (summaryNode.Open)
+            {
+                RemoveNode(summaryNode, false);
+                summaryNode.RefreshPorts();
+            }
+            else
+            {
+                AddDependencies(summaryNode);
+                EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(summaryNode));
+            }
+
+            summaryNode.Open = !summaryNode.Open;
+            
+            
         }
 
         private BundleNodeView AddBundle( Bundle bundle, Vector2 position = default)
         {
-            if (_nodes.TryGetValue(bundle.Name, out var node)) return node;
-
-            node = new BundleNodeView(bundle, position, OnNodeSelectionChange);
-            _nodes.Add(bundle.Name, node);
+            var node = new BundleNodeView(bundle, position, OnNodeSelectionChange);
+            
+            if (!_nodes.ContainsKey(bundle.Name)) 
+                _nodes.Add(bundle.Name, node);
             AddElement(node);
 
             return node;
@@ -121,7 +161,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         {
             if (bundle == _selectedBundle) return;
             _selectedBundle = bundle;
-
+/*
             if (bidirectionalDependecies)
             {
                 onSelectionChange?.Invoke(bundle);
@@ -137,7 +177,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
                     ToggleEdge(edge, true);
                 }
             }
-
+*/
             onSelectionChange?.Invoke(bundle);
         }
 
@@ -200,9 +240,11 @@ namespace DependenciesExplorer.Editor.UI.Elements
 		        i++;
 	        }
 
-            if ( bidirectionalDependecies)
+            // TODO: Add connections
+            /* if ( bidirectionalDependecies)
 	            foreach ( var node in _nodes.Values )
                     AddDependencies( node );
+                    */
         }
 
     }

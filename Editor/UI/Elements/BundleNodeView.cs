@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace DependenciesExplorer.Editor.UI.Elements
 {
-    public sealed class BundleNodeView : Node
+    public sealed class BundleNodeView : Node, IBundleNode
     {
         private Action<Bundle> _onSelected;
 
@@ -34,10 +34,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
         public static Dictionary<string, Color> AssignedColors = new Dictionary<string, Color>();
 
         public Bundle Bundle;
+        
 
         public Port In;
         public Port Out;
-
+        public string Path { get; set; }
+        
         public Vector2 Position
         {
             get => new Vector2( style.left.value.value, style.top.value.value);
@@ -47,6 +49,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 style.top = value.y;
             }
         }
+
+        Port IBundleNode.Out => Out;
+        Bundle IBundleNode.Bundle => Bundle;
 
         public BundleNodeView(Bundle bundle, Vector2 position, Action<Bundle> onSelected)
         {
@@ -82,9 +87,8 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 RemoveAt(i);
             var pill = new Pill(In, Out);
             pill.Q<Label>("title-label").text = Bundle.Name;
-            pill.style.color = new StyleColor(color);
+            pill.style.unityBackgroundImageTintColor = new StyleColor(color);
             Add( pill );
-
 
             RefreshPorts();
         }
