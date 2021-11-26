@@ -1,10 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DependenciesExplorer.Editor.Data;
+using Unity.EditorCoroutines.Editor;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DependenciesExplorer.Editor.UI.Elements
 {
@@ -34,8 +37,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new RectangleSelector());
 
-            _miniMap = new MiniMap {graphView = this};
-            _miniMap.anchored = true;
+            _miniMap = new MiniMap {graphView = this, anchored = true};
             _miniMap.style.width = 200;
             _miniMap.style.height = 175;
             _miniMap.style.right = 10;
@@ -50,30 +52,47 @@ namespace DependenciesExplorer.Editor.UI.Elements
             _nodes.Clear();
 
             _current = selection;
-            if ( _current.Count() == 1 )
-            {
-	            var item = _current.First();
-	            if ( !( item is Bundle bundle ) ) return;
-	            AddDependencies( AddBundle( bundle, new Vector2( 30, contentRect.center.y ) ) );
-	            return;
-            }
+	        var item = _current.FirstOrDefault();
+	        if ( !( item is Bundle bundle ) ) return;
+            var bundleNode = AddBundle( bundle, Vector2.zero );
+	        AddDependencies( bundleNode );
+            MarkDirtyRepaint();
+            EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(bundleNode));
         }
 
-        private void AddDependencies(BundleNodeView node)
+        private IEnumerator RePosition(BundleNodeView node)
+        {
+            yield return null;
+            Reposition(node, new Vector2(30, contentRect.center.y), node.layout.width);
+        }
+
+        private void Reposition(BundleNodeView node, Vector2 position, float width)
+        {
+            if (node.Position.magnitude > float.Epsilon) return;
+            node.Position = position;
+            var height = node.layout.height + 10;
+            var outCount = node.Out.connections.Count();
+
+            var maxWidth = 0f;
+            if ( node.Out.connections.Count() > 0 )
+                maxWidth = node.Out.connections.Max(edge => edge.input.node.layout.width);
+            var start = position + new Vector2( width + 25f, outCount < 2 ? 0 : (-height * (outCount / 2f))) ;
+
+            var i = 0;
+            foreach (var connection in node.Out.connections)
+                Reposition(connection.input.node as BundleNodeView , start + Vector2.up * (i++ * height), maxWidth);
+        }
+
+        private void AddDependencies(BundleNodeView node, bool allNodes = false)
         {
             var bundle = node.Bundle;
-            var outCount = bundle.Out.Count( b => !_nodes.ContainsKey(b.Key.Name) );
-            var start = node.Position + new Vector2( 100, outCount < 2 ? 0 : (-50 * (outCount / 2f))) ;
-            var i = 0;
 
             var children = new List<BundleNodeView>();
-
             foreach (var a in bundle.Out.Where( b => !_nodes.ContainsKey(b.Key.Name) ))
             {
-                var child = AddBundle(a.Key, start + Vector2.up * (i * 50));
+                var child = AddBundle(a.Key);
                 if ( !bidirectionalDependecies ) AddElement(node.Out.ConnectTo(child.In));
                 children.Add(child);
-                i++;
             }
 
             foreach (var a in bundle.Out)
@@ -83,16 +102,15 @@ namespace DependenciesExplorer.Editor.UI.Elements
             }
 
             foreach (var child in children)
-            {
                 AddDependencies(child);
-            }
             node.RefreshPorts();
         }
-        private BundleNodeView AddBundle( Bundle bundle, Vector2 position )
+
+        private BundleNodeView AddBundle( Bundle bundle, Vector2 position = default)
         {
             if (_nodes.TryGetValue(bundle.Name, out var node)) return node;
 
-            node = new BundleNodeView(bundle, OnNodeSelectionChange) {Position = position};
+            node = new BundleNodeView(bundle, position, OnNodeSelectionChange);
             _nodes.Add(bundle.Name, node);
             AddElement(node);
 
@@ -145,13 +163,13 @@ namespace DependenciesExplorer.Editor.UI.Elements
             node.SetEnabled(show);
             if (show)
             {
-                edge.RemoveFromClassList("hide");
-                node.RemoveFromClassList("hide");
+                edge.RemoveFromClassList("hidden");
+                node.RemoveFromClassList("hidden");
             }
             else
             {
-                edge.AddToClassList("hide");
-                node.AddToClassList("hide");
+                edge.AddToClassList("hidden");
+                node.AddToClassList("hidden");
             }
 
             if (!(node is BundleNodeView bundleNodeView)) return;
@@ -182,10 +200,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
 		        i++;
 	        }
 
-	        foreach ( var node in _nodes.Values )
-	        {
-		        AddDependencies( node );
-	        }
+            if ( bidirectionalDependecies)
+	            foreach ( var node in _nodes.Values )
+                    AddDependencies( node );
         }
 
     }

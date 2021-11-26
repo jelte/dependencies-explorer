@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DependenciesExplorer.Editor.Data;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -47,34 +48,43 @@ namespace DependenciesExplorer.Editor.UI.Elements
             }
         }
 
-        public BundleNodeView(Bundle bundle, Action<Bundle> onSelected)
+        public BundleNodeView(Bundle bundle, Vector2 position, Action<Bundle> onSelected)
         {
             title = Bundle.Name;
             tooltip = Bundle.Name;
             Bundle = bundle;
+            Position = position;
             _onSelected = onSelected;
-
-            In = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
-            In.portName = string.Empty;
-            In.portColor = new Color(Color.green.r, Color.green.g, Color.green.b, 0.2f);
-            In.SetEnabled(false);
-            Out = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
-            Out.portName = string.Empty;
-            Out.portColor = Color.red;
-            Out.SetEnabled(false);
-
-            inputContainer.Add(In);
-            outputContainer.Add(Out);
-
-            titleContainer.style.height = 0;
 
             if (!AssignedColors.TryGetValue(bundle.Category, out var color))
             {
                 color = _colors[AssignedColors.Count % _colors.Length];
                 AssignedColors.Add(bundle.Category, color);
             }
-            topContainer.style.backgroundColor = new StyleColor(color);
+            //topContainer.style.backgroundColor = new StyleColor(color);
             elementTypeColor = color;
+
+            //titleContainer.style.height = 0;
+            //style.width = 75;
+
+            In = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
+            In.AddToClassList("hidden");
+            In.portName = string.Empty;
+            In.portColor = new Color(Color.green.r, Color.green.g, Color.green.b, 0.2f);
+            In.SetEnabled(false);
+            Out = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
+            Out.AddToClassList("hidden");
+            Out.portName = string.Empty;
+            Out.portColor = Color.red;
+            Out.SetEnabled(false);
+
+            for (  var i = childCount - 1; i >= 0; i-- )
+                RemoveAt(i);
+            var pill = new Pill(In, Out);
+            pill.Q<Label>("title-label").text = Bundle.Name;
+            pill.style.color = new StyleColor(color);
+            Add( pill );
+
 
             RefreshPorts();
         }
@@ -83,10 +93,6 @@ namespace DependenciesExplorer.Editor.UI.Elements
         {
             base.OnSelected();
             _onSelected?.Invoke(Bundle);
-        }
-
-        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-        {
         }
     }
 }
