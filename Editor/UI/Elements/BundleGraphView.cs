@@ -13,7 +13,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 {
     public class BundleGraphView : GraphView
     {
-        public event Action<Bundle> onSelectionChange;
+        public event Action<Bundle, Direction> onSelectionChange;
 
         private Dictionary< string, BundleNodeView > _nodes = new Dictionary<string, BundleNodeView>();
         private IEnumerable<object> _current;
@@ -23,6 +23,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         private Reader _reader;
 
         public bool bidirectionalDependecies { get; set; }
+        public Direction Direction { get; set; } = Direction.Output;
 
         private List<string> _path = new List<string>();
         private string _currentPath;
@@ -39,14 +40,6 @@ namespace DependenciesExplorer.Editor.UI.Elements
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new RectangleSelector());
-
-            _miniMap = new MiniMap {graphView = this, anchored = true};
-            _miniMap.style.width = 200;
-            _miniMap.style.height = 175;
-            _miniMap.style.right = 10;
-            _miniMap.style.bottom = 10;
-
-            Add(_miniMap);
         }
 
         public void OnSelectionChange(IEnumerable<object> selection)
@@ -62,6 +55,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
             bundleNode.Position = new Vector2(30, contentRect.center.y);
             MarkDirtyRepaint();
             EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(bundleNode));
+            onSelectionChange?.Invoke( bundleNode.Bundle, Direction );
         }
 
         private IEnumerator RePosition(IBundleNode node)
@@ -84,36 +78,29 @@ namespace DependenciesExplorer.Editor.UI.Elements
             var i = 0;
             foreach (var connection in node.Out.connections)
             {
-                var onode = connection.input.node as IBundleNode;
+                var onode = connection.input.node as BundleNodeView;
                 onode.Position = start + Vector2.up * (i++ * height);
                 Reposition(onode, onode.Position, maxWidth);
             }
         }
 
-        private void AddDependencies(IBundleNode node )
+        private void AddDependencies(BundleNodeView node )
         {
             var bundle = node.Bundle;
 
-            foreach (var a in bundle.Out )
+            var others = Direction == Direction.Output ? bundle.Out : bundle.In;
+            foreach (var a in others )
             {
                 var child = AddBundle(a.Key);
                 AddElement(node.Out.ConnectTo(child.In));
-                AddDependeciesSummary(child);
             }
-        }
 
-        private void AddDependeciesSummary(BundleNodeView bundleNode)
-        {
-            if (bundleNode.Bundle.ExpandedDependencies.Length == 0) return;
-            
-            var summaryNode = new BundleNodeSummary(bundleNode.Bundle, OnSummarySelected);
-            AddElement(summaryNode);
-            AddElement(bundleNode.Out.ConnectTo(summaryNode.In));
+            node.Open = true;
         }
 
         private void RemoveNode(GraphElement element, bool inclElement = true )
         {
-            if (element is IBundleNode node)
+            if (element is BundleNodeView node)
             {
                 var connections = node.Out.connections.ToArray();
                 foreach (var connection in connections)
@@ -128,27 +115,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
             RemoveElement(element);
         }
         
-        private void OnSummarySelected(BundleNodeSummary summaryNode)
-        {
-            if (summaryNode.Open)
-            {
-                RemoveNode(summaryNode, false);
-                summaryNode.RefreshPorts();
-            }
-            else
-            {
-                AddDependencies(summaryNode);
-                EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(summaryNode));
-            }
-
-            summaryNode.Open = !summaryNode.Open;
-            
-            
-        }
-
         private BundleNodeView AddBundle( Bundle bundle, Vector2 position = default)
         {
-            var node = new BundleNodeView(bundle, position, OnNodeSelectionChange);
+            var node = new BundleNodeView(bundle, position, Direction, OnNodeSelectionChange);
             
             if (!_nodes.ContainsKey(bundle.Name)) 
                 _nodes.Add(bundle.Name, node);
@@ -157,28 +126,29 @@ namespace DependenciesExplorer.Editor.UI.Elements
             return node;
         }
 
-        private void OnNodeSelectionChange(Bundle bundle)
+        private void OnNodeSelectionChange(BundleNodeView bundleNode)
         {
-            if (bundle == _selectedBundle) return;
-            _selectedBundle = bundle;
-/*
-            if (bidirectionalDependecies)
+            RemoveNode(bundleNode, false);
+            if (!bundleNode.Open)
             {
-                onSelectionChange?.Invoke(bundle);
-                return;
-            }
-
-            if (_nodes.TryGetValue(bundle.Name, out var node))
-            {
-                ToggleNode(node);
-
-                foreach (var edge in node.Out.connections)
+                var e = bundleNode.In.connections.ToArray();
+                foreach (var connection in e)
                 {
-                    ToggleEdge(edge, true);
+                    var siblingEdges = connection.output.connections.ToArray();
+                    foreach (var siblingEdge in siblingEdges)
+                    {
+                        if (!(siblingEdge.input.node is BundleNodeView sibling)) continue;
+                        RemoveNode(sibling, false);
+                        sibling.Open = false;
+                    }
                 }
-            }
-*/
-            onSelectionChange?.Invoke(bundle);
+                AddDependencies(bundleNode);
+                EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(bundleNode));
+            } 
+            else 
+                bundleNode.Open = false;
+
+            onSelectionChange?.Invoke(bundleNode.Bundle, Direction);
         }
 
         private void ToggleNode(BundleNodeView node)

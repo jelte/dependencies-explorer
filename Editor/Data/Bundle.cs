@@ -22,8 +22,11 @@ namespace DependenciesExplorer.Editor.Data
         public string[] ImplicitAssets;
         public string[] ExplicitAssets;
         public Dictionary<string, List<string>> ExternalAssets;
-        //public Dictionary<Bundle, Dictionary<string, List<string>>> In;
+        public Dictionary<Bundle, Dictionary<string, List<string>>> In;
         public Dictionary<Bundle, Dictionary<string, List<string>>> Out;
+
+        public List<BundleAsset> AssetsIn;
+        public List<BundleAsset> AssetsOut;
 
         public static bool operator ==(Bundle a, Bundle b) => a.Equals(b);
         public static bool operator !=(Bundle a, Bundle b) => !(a.Equals(b));

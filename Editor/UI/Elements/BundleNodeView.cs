@@ -10,7 +10,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 {
     public sealed class BundleNodeView : Node, IBundleNode
     {
-        private Action<Bundle> _onSelected;
+        private Action<BundleNodeView> _onSelected;
 
         private static Color[] _colors =
         {
@@ -38,6 +38,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
         public Port In;
         public Port Out;
+        public bool Open = false;
         public string Path { get; set; }
         
         public Vector2 Position
@@ -53,7 +54,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         Port IBundleNode.Out => Out;
         Bundle IBundleNode.Bundle => Bundle;
 
-        public BundleNodeView(Bundle bundle, Vector2 position, Action<Bundle> onSelected)
+        public BundleNodeView(Bundle bundle, Vector2 position, Direction direction, Action<BundleNodeView> onSelected)
         {
             title = Bundle.Name;
             tooltip = Bundle.Name;
@@ -77,8 +78,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
             In.portName = string.Empty;
             In.portColor = new Color(Color.green.r, Color.green.g, Color.green.b, 0.2f);
             In.SetEnabled(false);
-            Out = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
-            Out.AddToClassList("hidden");
+            if (direction == Direction.Input)
+            {
+                Out = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
+                Out.AddToClassList("hidden");
+            }
+            else Out = BundlePortSummary.Create<Edge>(bundle, Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
             Out.portName = string.Empty;
             Out.portColor = Color.red;
             Out.SetEnabled(false);
@@ -96,7 +101,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         public override void OnSelected()
         {
             base.OnSelected();
-            _onSelected?.Invoke(Bundle);
+            _onSelected?.Invoke(this);
         }
     }
 }

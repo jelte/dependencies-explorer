@@ -27,7 +27,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
         public BundleListView() : base()
         {
-            makeItem = () => new Element();;
+            makeItem = () => new Element();
             bindItem = BindItem;
         }
 

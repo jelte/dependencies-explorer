@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DependenciesExplorer.Editor.Data;
 using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -41,9 +42,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 if (!(selected is KeyValuePair<Bundle, Dictionary<string,List<string>>> pair)) continue;
 
                 _lstDependenciesFiles.itemsSource = pair.Value.Select( pair => pair ).ToArray();
+                _lstDependenciesFiles.Rebuild();
                 _lstFiles.itemsSource = _empty;
                 _lstLinksTo.itemsSource = _empty;
-                _lstDependenciesFiles.Refresh();
                 return;
             }
         }
@@ -58,15 +59,14 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstLinksTo.itemsSource = _empty;
                 _lstFiles.Clear();
                 _lstFiles.itemsSource = pair.Value;
-                _lstFiles.Refresh();
-
+                _lstFiles.Rebuild();
 
                 var guid = AssetDatabase.AssetPathToGUID( pair.Key );
                 Indexer.TryFind( guid, out var deps );
 
                 _lstLinksTo.Clear();
                 _lstLinksTo.itemsSource = deps;
-                _lstLinksTo.Refresh();
+                _lstLinksTo.Rebuild();
                 return;
             }
         }
@@ -76,9 +76,9 @@ namespace DependenciesExplorer.Editor.UI.Elements
             (element as BundleElement)?.BindData(((KeyValuePair<Bundle,Dictionary<string, List<string>>>) _lstDependenciesBundles.itemsSource[index]).Key);
         }
 
-        public void OnSelectionChange(Bundle bundle)
+        public void OnSelectionChange(Bundle bundle, Direction direction)
         {
-            _lblName ??= this.Q<Label>("name");
+            _lblName ??= this.Q< Label >("name");
             _lblName.text = bundle.Name;
 
             if (_lstDependenciesBundles == null)
@@ -93,7 +93,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstDependenciesFiles.bindItem = BindDependencyFileItem;
                 _lstDependenciesFiles.onSelectionChange += OnDependencyFileSelectionChange;
 
-                _lstFiles = this.Q<ListView>("files");
+                _lstFiles = this.Q< ListView >("files");
                 _lstFiles.makeItem = () => new FileElement();
                 _lstFiles.bindItem = BindFileItem;
                 _lstFiles.onSelectionChange += OnFileSelectionChange;
@@ -104,11 +104,15 @@ namespace DependenciesExplorer.Editor.UI.Elements
             }
 
             _lstDependenciesBundles.Clear();
-            _lstDependenciesBundles.itemsSource = bundle.Out.OrderBy( pair => pair.Key.Name ).ToArray();
+            var bundles = direction == Direction.Output ? bundle.Out : bundle.In;
+            if (bundles == null)
+                _lstDependenciesBundles.itemsSource = _empty;
+            else
+                _lstDependenciesBundles.itemsSource = bundles?.OrderBy( pair => pair.Key.Name )?.ToArray();
+            _lstDependenciesBundles.Rebuild();
             _lstDependenciesFiles.itemsSource = _empty;
             _lstFiles.itemsSource = _empty;
             _lstLinksTo.itemsSource = _empty;
-            _lstDependenciesBundles.Refresh();
         }
 
         private void BindLinkToItem( VisualElement element, int index )
@@ -128,7 +132,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
 		        _lstLinksTo.Clear();
 		        _lstLinksTo.itemsSource = deps;
-		        _lstLinksTo.Refresh();
+                _lstLinksTo.Rebuild();
 		        return;
 	        }
         }

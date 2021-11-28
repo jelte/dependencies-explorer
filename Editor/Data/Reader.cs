@@ -36,13 +36,44 @@
 							node.Out.Add(other, outFiles);
 						}
 						outFiles.Add(externalAsset.Key, externalAsset.Value);
-						/*if (!other.In.TryGetValue(node, out var inFiles))
+						foreach (var depFile in externalAsset.Value)
 						{
-							inFiles = new List<string>();
-							other.In.Add(node, inFiles);
+							if (!other.In.TryGetValue(node, out var inFiles))
+							{
+								inFiles = new Dictionary<string, List<string>>();
+								other.In.Add(node, inFiles);
+							}
+
+							if (!inFiles.TryGetValue(externalAsset.Key, out var files))
+							{
+								files = new List<string>();
+								inFiles.Add(externalAsset.Key, files);
+							}
+							files.Add(depFile);
 						}
-						inFiles.Add(externalAsset);*/
+
+						foreach (var dependent in externalAsset.Value)
+						{
+							node.AssetsOut.Add( new BundleAsset { Bundle = other, Path = externalAsset.Key, Reference = dependent });
+							other.AssetsIn.Add( new BundleAsset { Bundle = node, Path = dependent, Reference = externalAsset.Key });
+						}
 					}
+
+					foreach (var dependency in node.Dependencies)
+					{
+						if (!Bundles.TryGetValue(dependency, out var bundle)) continue;
+						if (!node.Out.TryGetValue(bundle, out var outFiles))
+						{
+							outFiles = new Dictionary<string, List<string>>();
+							node.Out.Add(bundle, outFiles);
+						}
+					}
+				}
+
+				foreach (var node in Bundles.Values)
+				{
+					node.AssetsOut.Sort();
+					node.AssetsIn.Sort();
 				}
 
 				EditorUtility.ClearProgressBar();
@@ -54,7 +85,7 @@
 				foreach (var bundleName in bundles)
 				{
 					if ( !Bundles.TryGetValue( bundleName, out var bundle ) ) continue;
-					if (!bundle.ExplicitAssets.Contains(asset) /*&& !bundle.ImplicitAssets.Contains(asset)*/) continue;
+					if (!bundle.ExplicitAssets.Contains(asset) && !bundle.ImplicitAssets.Contains(asset)) continue;
 					result = bundle;
 					return true;
 				}
@@ -78,18 +109,20 @@
 				var externalAssets = new Dictionary<string, List<string>>();
 				HandleExplicitAssets(lines, ref i, externalAssets, out var explicitAssets);
 				HandleImplicitAssets(lines, ref i, externalAssets, out var implicitAssets);
-
+				expandedDependencies.AddRange(dependencies);
 
 				Bundles.Add(bundleName, new Bundle
 				{
 					Name = bundleName,
 					Dependencies = dependencies,
-					ExpandedDependencies = expandedDependencies,
+					ExpandedDependencies = expandedDependencies.Distinct().ToArray(),
 					ExplicitAssets = explicitAssets,
-					//ImplicitAssets = implicitAssets,
+					ImplicitAssets = implicitAssets,
 					ExternalAssets = externalAssets,
-					//In = new Dictionary<Bundle, List<string>>(),
-					Out = new Dictionary<Bundle, Dictionary<string, List<string>>>()
+					In = new Dictionary<Bundle, Dictionary<string, List<string>>>(),
+					Out = new Dictionary<Bundle, Dictionary<string, List<string>>>(),
+					AssetsOut = new List<BundleAsset>(),
+					AssetsIn = new List<BundleAsset>(),
 				});
 			}
 
@@ -159,15 +192,15 @@
 				assets = assetsL.ToArray();
 			}
 
-			private static bool TryProcessExpandedBundleDependencies(string line, out string[] dependencies)
+			private static bool TryProcessExpandedBundleDependencies(string line, out List<string> dependencies)
 			{
 				dependencies = null;
 				var match = Regex.Match(line, "^\\t\\tExpanded Bundle Dependencies: (.*)", RegexOptions.IgnoreCase);
 				if (!match.Success) return false;
 				dependencies = match.Groups[1].Value.Split(',')
-					.Where(value => !string.IsNullOrEmpty(value))
+					.Where(value => !string.IsNullOrEmpty(value.Trim()))
 					.Select(value => value.Trim().Replace(".bundle", "").ToLower())
-					.ToArray();
+					.ToList();
 				return true;
 			}
 
@@ -177,6 +210,7 @@
 				var result = Regex.Match(line, "^\\t\\tBundle Dependencies: (.*)", RegexOptions.IgnoreCase);
 				if (!result.Success) return false;
 				dependencies = result.Groups[1].Value.Split(',')
+					.Where(value => !string.IsNullOrEmpty(value.Trim()))
 					.Select(value => value.Trim().Replace(".bundle", "").ToLower())
 					.ToArray();
 				return true;
