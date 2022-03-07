@@ -13,7 +13,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
     {
         public event Action<IEnumerable<object>> onItemsChosen;
 
-        
+
         private Label m_bundleName;
         private ListView m_list;
 
@@ -22,7 +22,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         public new class UxmlFactory : UxmlFactory< ConnectionsView, UxmlTraits > { }
 
         public ConnectionsView()
-        { 
+        {
             RegisterCallback<GeometryChangedEvent>(OnPostDisplaySetup);
         }
 
@@ -30,7 +30,7 @@ namespace DependenciesExplorer.Editor.UI.Elements
         {
             UnregisterCallback<GeometryChangedEvent>(OnPostDisplaySetup);
             m_bundleName = this.Q<Label>();
-            
+
             m_list = this.Q<ListView>();
             m_list.makeItem = MakeRow;
             m_list.bindItem = BindRow;
@@ -57,8 +57,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 m_list.itemsSource = _empty;
             else
                 m_list.itemsSource = bundles?.OrderBy( pair => pair.Key.Name )?.ToArray();
-            
+
+#if UNITY_2022_1_OR_NEWER
             m_list.Rebuild();
+#else
+            m_list.Refresh();
+#endif
         }
 
     }

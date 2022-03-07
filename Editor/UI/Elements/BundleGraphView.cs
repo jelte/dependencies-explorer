@@ -114,12 +114,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
             if (!inclElement) return;
             RemoveElement(element);
         }
-        
+
         private BundleNodeView AddBundle( Bundle bundle, Vector2 position = default)
         {
             var node = new BundleNodeView(bundle, position, Direction, OnNodeSelectionChange);
-            
-            if (!_nodes.ContainsKey(bundle.Name)) 
+
+            if (!_nodes.ContainsKey(bundle.Name))
                 _nodes.Add(bundle.Name, node);
             AddElement(node);
 
@@ -144,8 +144,8 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 }
                 AddDependencies(bundleNode);
                 EditorCoroutineUtility.StartCoroutineOwnerless(RePosition(bundleNode));
-            } 
-            else 
+            }
+            else
                 bundleNode.Open = false;
 
             onSelectionChange?.Invoke(bundleNode.Bundle, Direction);
@@ -211,10 +211,16 @@ namespace DependenciesExplorer.Editor.UI.Elements
 	        }
 
             // TODO: Add connections
-            /* if ( bidirectionalDependecies)
+            if ( bidirectionalDependecies)
 	            foreach ( var node in _nodes.Values )
-                    AddDependencies( node );
-                    */
+	            {
+		            var others = Direction == Direction.Output ? node.Bundle.Out : node.Bundle.In;
+		            foreach ( var a in others )
+		            {
+			            if ( !_nodes.TryGetValue( a.Key.Name, out var other ) ) continue;
+			            AddElement( node.Out.ConnectTo( other.In ) );
+		            }
+	            }
         }
 
     }

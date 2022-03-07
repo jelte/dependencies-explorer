@@ -89,7 +89,7 @@ namespace DependenciesExplorer.Editor
 
         private void OnFileSelection(IEnumerable<object> selection)
         {
-            Selection.objects = selection.Select( value => AssetDatabase.LoadAssetAtPath< Object >( ((BundleAsset)value).Reference ) ).ToArray();
+            Selection.objects = selection.Select( value => AssetDatabase.LoadAssetAtPath< Object >( _graphView.Direction == Direction.Output ? ((BundleAsset)value).Reference : ((BundleAsset)value).Path ) ).ToArray();
         }
 
         private void OnDirectionChanged(ChangeEvent<bool> evt)
@@ -116,7 +116,12 @@ namespace DependenciesExplorer.Editor
             _reader.ReadFile( path );
 
             _bundleListView.itemsSource = _reader.Bundles.Values.OrderBy( bundle => bundle.Name ).ToArray();
-            _bundleListView.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+			_bundleListView.Rebuild();
+#else
+	        _bundleListView.Refresh();
+#endif
+
             _graphView.Reset( _reader );
         }
 
@@ -128,7 +133,12 @@ namespace DependenciesExplorer.Editor
             _splitList.UnCollapse();
             _bundleListView.ClearSelection();
             _bundleListView.itemsSource = _reader.Bundles.Values.Where( v => v.Name.Contains(value) ).ToArray();
-            _bundleListView.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+			_bundleListView.Rebuild();
+#else
+            _bundleListView.Refresh();
+#endif
+
         }
     }
 

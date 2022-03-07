@@ -14,7 +14,7 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
     public class TableView : VisualElement
     {
         public event Action<IEnumerable<object>> onItemsChosen;
-        
+
         private Toolbar m_header;
         private ListView m_list;
         private List<Column> m_columns = new List<Column>();
@@ -33,7 +33,7 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
         public new class UxmlFactory : UxmlFactory<TableView, UxmlTraits>
         {
         }
-        
+
         public TableView() : base()
         {
             RegisterCallback<GeometryChangedEvent>(OnPostDisplaySetup);
@@ -45,14 +45,19 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
             m_list = this.Q<ListView>();
             m_list.makeItem = MakeRow;
             m_list.bindItem = BindRow;
+            m_list.selectionType = SelectionType.Multiple;
             m_list.onSelectionChange += value => onItemsChosen?.Invoke(value);
-            
+
             m_header = this.Q<Toolbar>();
         }
 
         public void Rebuild()
         {
+#if UNITY_2022_1_OR_NEWER
             m_list.Rebuild();
+#else
+	        m_list.Refresh();
+#endif
         }
 
         private VisualElement MakeRow()
@@ -70,7 +75,7 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
                 }
                 row.Add(element);
             }
-            
+
 
             return row;
         }
@@ -85,8 +90,8 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
         {
             var column = new Column()
             {
-                name = name, 
-                makeItem = makeItem, 
+                name = name,
+                makeItem = makeItem,
                 bindItem = (element, index) => bindItem.Invoke(element, m_list.itemsSource[index])
             };
             m_columns.Add(column);
@@ -96,7 +101,11 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
         public void Filter<T>(Func<T, bool> validation)
         {
             m_list.itemsSource = ((List<T>) m_itemsSource).Where(value => validation.Invoke(value)).ToList();
+#if UNITY_2022_1_OR_NEWER
             m_list.Rebuild();
+#else
+            m_list.Refresh();
+#endif
         }
 
         public class Header : VisualElement
@@ -108,7 +117,7 @@ namespace DependenciesExplorer.Editor.UI.Elements.Table
                 style.flexGrow = 1;
                 style.alignContent = new StyleEnum<Align>(Align.Center );
 
-                
+
                 var label = new Label();
                 label.text = name;
                 label.style.flexGrow = 1;

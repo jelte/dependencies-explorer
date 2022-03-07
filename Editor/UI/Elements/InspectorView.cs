@@ -42,7 +42,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 if (!(selected is KeyValuePair<Bundle, Dictionary<string,List<string>>> pair)) continue;
 
                 _lstDependenciesFiles.itemsSource = pair.Value.Select( pair => pair ).ToArray();
-                _lstDependenciesFiles.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+				_lstDependenciesFiles.Rebuild();
+#else
+	            _lstDependenciesFiles.Refresh();
+#endif
+
                 _lstFiles.itemsSource = _empty;
                 _lstLinksTo.itemsSource = _empty;
                 return;
@@ -59,14 +64,22 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstLinksTo.itemsSource = _empty;
                 _lstFiles.Clear();
                 _lstFiles.itemsSource = pair.Value;
-                _lstFiles.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+				_lstFiles.Rebuild();
+#else
+	            _lstFiles.Refresh();
+#endif
 
                 var guid = AssetDatabase.AssetPathToGUID( pair.Key );
                 Indexer.TryFind( guid, out var deps );
 
                 _lstLinksTo.Clear();
                 _lstLinksTo.itemsSource = deps;
-                _lstLinksTo.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+				_lstLinksTo.Rebuild();
+#else
+	            _lstLinksTo.Refresh();
+#endif
                 return;
             }
         }
@@ -109,7 +122,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
                 _lstDependenciesBundles.itemsSource = _empty;
             else
                 _lstDependenciesBundles.itemsSource = bundles?.OrderBy( pair => pair.Key.Name )?.ToArray();
-            _lstDependenciesBundles.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+			_lstDependenciesBundles.Rebuild();
+#else
+	        _lstDependenciesBundles.Refresh();
+#endif
+
             _lstDependenciesFiles.itemsSource = _empty;
             _lstFiles.itemsSource = _empty;
             _lstLinksTo.itemsSource = _empty;
@@ -132,7 +150,12 @@ namespace DependenciesExplorer.Editor.UI.Elements
 
 		        _lstLinksTo.Clear();
 		        _lstLinksTo.itemsSource = deps;
-                _lstLinksTo.Rebuild();
+#if UNITY_2022_1_OR_NEWER
+				_lstLinksTo.Rebuild();
+#else
+		        _lstLinksTo.Refresh();
+#endif
+
 		        return;
 	        }
         }
